@@ -88,7 +88,6 @@ export default function Room() {
 
   const [summary, setSummary] = useState('');
   const [summarizing, setSummarizing] = useState(false);
-
   const [toasts, setToasts] = useState([]);
 
   const socketRef = useRef(null);
@@ -96,6 +95,9 @@ export default function Room() {
   const lastTimeRef = useRef(0);
   const seekCheckInterval = useRef(null);
   const chatEndRef = useRef(null);
+
+  // Client fullscreen ke liye
+  const videoContainerRef = useRef(null);
 
   function pushToast(text) {
     const id = Date.now() + Math.random();
@@ -110,6 +112,19 @@ export default function Room() {
         prev.filter((toast) => toast.id !== id)
       );
     }, 3500);
+  }
+
+  function handleFullscreen() {
+    const element = videoContainerRef.current;
+
+    if (!element) return;
+
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+      return;
+    }
+
+    element.requestFullscreen?.();
   }
 
   useEffect(() => {
@@ -289,12 +304,11 @@ export default function Room() {
       videoId,
 
       playerVars: {
+        // Host controls use karega
+        // Client ke controls hidden rahenge
         controls: isHost ? 1 : 0,
         disablekb: isHost ? 0 : 1,
-
-        // Fullscreen sab users ke liye enabled
         fs: 1,
-
         start: Math.floor(startTime),
       },
 
@@ -683,21 +697,37 @@ export default function Room() {
               </div>
             )}
 
-            <div className="relative aspect-video overflow-hidden bg-[#1E1E1E]">
+            {/* VIDEO */}
+            <div
+              ref={videoContainerRef}
+              className="relative aspect-video overflow-hidden bg-[#1E1E1E]"
+            >
               <div
                 id="yt-player"
                 className="h-full w-full"
               />
 
               {!isHost && (
-                <div className="pointer-events-none absolute inset-0" />
+                <>
+                  {/* Client YouTube player ko click nahi kar sakta */}
+                  <div className="absolute inset-0" />
+
+                  {/* Sirf fullscreen available */}
+                  <button
+                    type="button"
+                    onClick={handleFullscreen}
+                    className="absolute bottom-3 right-3 border border-[#383838] bg-[#292929] px-3 py-2 text-xs font-medium text-[#F2EFEA] hover:bg-[#353535]"
+                  >
+                    Fullscreen
+                  </button>
+                </>
               )}
             </div>
 
             {!isHost && (
               <p className="mt-2 text-xs text-[#A8A29E]">
-                only the host controls playback. Use the
-                fullscreen button to watch on your screen.
+                only the host controls playback. Use
+                fullscreen to watch on your screen.
               </p>
             )}
 
